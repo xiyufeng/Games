@@ -1,4 +1,5 @@
  
-module.exports = function(){ 
-  return 'to test xdApp(firework refactor): done.';
+module.exports = function(){  
+  return 'to test xdApp: done.';
+ 
 }

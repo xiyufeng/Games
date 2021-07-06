@@ -34,7 +34,6 @@ import com.pbz.demo.hello.util.engine.JSGraphEngine;
 
 public final class JsonSriptParser {
 	private static final String subtitle_video_name = "vSubtitle.mp4";
-	private static final String final_video_name = "vFinal.mp4";
 	private static final boolean isWindows = System.getProperty("os.name").startsWith("Windows");
 	private static List<Map<String, Object>> supperObjectsMapList = new ArrayList<Map<String, Object>>();
 	private static Map<Integer, AOIArea> aoiMap = new HashMap<>();
@@ -43,7 +42,7 @@ public final class JsonSriptParser {
 	private static ScriptEngineManager mgr = new ScriptEngineManager();
 	private static ScriptEngine engine = mgr.getEngineByName("JavaScript");
 	private static JSGraphEngine graphEngine = new JSGraphEngine();
-	private static boolean isScriptLoaded = false;
+	private static final String currentScript = "VAR_CURRENT_SCRIPT";
 
 	public static void setMacros(String scriptFilePath) throws Exception {
 		String jsonString = getJsonString(scriptFilePath);
@@ -100,6 +99,8 @@ public final class JsonSriptParser {
 		JSONObject requestObj = getJsonObjectbyName(jsonObj, "request");
 		supperObjectsMapList.clear();
 		aoiMap.clear();
+		MacroResolver.setProperty(currentScript, "");
+		MacroResolver.setProperty("VAR_BGAUDIO", "");
 
 		initMap(requestObj);
 		String version = requestObj.getString("version");
@@ -107,8 +108,11 @@ public final class JsonSriptParser {
 		int width = requestObj.getInt("width");
 		int height = requestObj.getInt("height");
 		String audioFilePath = requestObj.getString("music");
+		String videoFilePath = requestObj.optString("video");
 		String rate = requestObj.getString("rate");
 		int index = 0;
+
+		extractInfoFromVideo(videoFilePath, rate);
 
 		Iterator<String> keys = requestObj.keys();
 		while (keys.hasNext()) {
@@ -151,6 +155,13 @@ public final class JsonSriptParser {
 						}
 						if (bgImg != null) {
 							g.drawImage(bgImg, 0, 0, width, height, null);
+						}
+
+						String jpegFile = System.getProperty("user.dir") + "/" + Integer.toString(index + 1) + ".jpeg";
+						File file = new File(jpegFile);
+						if (file.exists()) {
+							Image videoImage = ImageIO.read(file);
+							g.drawImage(videoImage, 0, 0, width, height, null);
 						}
 
 						JSONArray objectArray = frameObj.getJSONArray("objects");
@@ -219,8 +230,12 @@ public final class JsonSriptParser {
 			}
 		}
 
-		// Download audio file
-		String audioFile = FileUtil.downloadFileIfNeed(audioFilePath);
+		String audioFile = MacroResolver.getProperty("VAR_BGAUDIO");
+		if (audioFile != null && audioFile.trim().length() != 0) {
+			audioFile = MacroResolver.getProperty("VAR_BGAUDIO");
+		} else {
+			audioFile = FileUtil.downloadFileIfNeed(audioFilePath);
+		}
 		// Cut the audio
 		if (!new File(audioFile).exists()) {
 			throw new Exception("The audio file " + audioFile + " doesn't exist!");
@@ -235,6 +250,7 @@ public final class JsonSriptParser {
 		ExecuteCommand.executeCommand(cutAudioCmd, null, new File("."), null);
 
 		// Combine silent video and audio to a final video
+		String final_video_name = MacroResolver.getProperty("video_name");
 		String[] cmds = { ffmpegPath, "-y", "-i", subtitle_video_name, "-i", tmpAudioFile, final_video_name };
 		boolean bRunScript = ExecuteCommand.executeCommand(cmds, null, new File("."), null);
 
@@ -245,6 +261,31 @@ public final class JsonSriptParser {
 			MacroResolver.setProperty("VAR_GIF_ENABLED", "true");
 		}
 		return bRunScript;
+	}
+
+	private static void extractInfoFromVideo(String videoFilePath, String rate) throws Exception {
+		if (videoFilePath == null || videoFilePath.trim().length() == 0) {
+			return;
+		}
+		String ffmpegPath = "ffmpeg";
+		if (!isWindows) {
+			ffmpegPath = "/usr/bin/ffmpeg";
+			if (!new File(ffmpegPath).exists()) {
+				ffmpegPath = "/usr/local/bin/ffmpeg";
+			}
+		}
+
+		String videoFile = FileUtil.downloadFileIfNeed(videoFilePath);
+		if (!new File(videoFile).exists()) {
+			throw new Exception("The video file " + videoFile + " doesn't exist!");
+		}
+		String[] extractPicturesCmd = { ffmpegPath, "-y", "-i", videoFile, "-r", rate, "-f", "image2", "%d.jpeg" };
+		ExecuteCommand.executeCommand(extractPicturesCmd, null, new File("."), null);
+
+		String extractMP3 = "extractAudio.mp3";
+		String[] extractAudioCmd = { ffmpegPath, "-y", "-i", videoFile, extractMP3 };
+		ExecuteCommand.executeCommand(extractAudioCmd, null, new File("."), null);
+		MacroResolver.setProperty("VAR_BGAUDIO", extractMP3);
 	}
 
 	private static void drawOrdinaryObjects(JSONObject obj, Graphics2D g) throws IOException {
@@ -483,15 +524,25 @@ public final class JsonSriptParser {
 	private static void drawJavaScriptObject(JSONObject jObj, Graphics2D gp2d, int number) throws Exception {
 		JSONObject attributeObj = jObj.getJSONObject("attribute");
 		String striptFile = attributeObj.getString("script");
+		boolean isReLoadScript = false;
+		if (!striptFile.equalsIgnoreCase(MacroResolver.getProperty(currentScript))) {
+			MacroResolver.setProperty(currentScript, striptFile);
+			isReLoadScript = true;
+		}
+		striptFile = FileUtil.downloadFileIfNeed(striptFile);
 		String functionName = attributeObj.getString("function");
 		int start = attributeObj.getInt("start");
 		graphEngine.setGraphics(gp2d);
 		engine.put("document", graphEngine);
-		if (isScriptLoaded == false) {
+
+		if (isReLoadScript) {
+			StringBuffer preDefined = new StringBuffer();
+			preDefined.append("function Image() { return document.getImageObj()}");
+			engine.eval(preDefined.toString());
+
 			File f = new File(striptFile);
 			Reader r = new InputStreamReader(new FileInputStream(f));
 			engine.eval(r);
-			isScriptLoaded = true;
 		}
 		Invocable invoke = (Invocable) engine;
 		invoke.invokeFunction(functionName, new Object[] { number - start });

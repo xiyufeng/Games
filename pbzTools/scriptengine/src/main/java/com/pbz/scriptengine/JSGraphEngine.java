@@ -14,6 +14,7 @@ public class JSGraphEngine {
 
 	private CanvasObj canvas = new CanvasObj();
 	private Graphics2D graphics = null;
+	private static final boolean isWindows = System.getProperty("os.name").startsWith("Windows");
 
 	public Graphics2D getGraphics() {
 		return graphics;
@@ -96,7 +97,8 @@ public class JSGraphEngine {
 				applayStrokeColor();
 				graphics.drawArc(x - r, y - r, 2 * r, 2 * r, (int) startAngle, (int) arcAngle); // 绘制圆弧（含整圆）
 				strokeStyle = "";
-			} else {
+			}
+			if (fillStyle.trim().length() > 0) {
 				applayColor();
 				graphics.fillArc(x - r, y - r, 2 * r, 2 * r, (int) startAngle, (int) arcAngle);
 			}
@@ -125,6 +127,7 @@ public class JSGraphEngine {
 
 		public void moveTo(int x, int y) {
 			applayStrokeColor();
+			graphics.setStroke(new BasicStroke(lineWidth));
 			from = x;
 			to = y;
 		}
@@ -145,6 +148,19 @@ public class JSGraphEngine {
 
 		private void applayColor() {
 			if (fillStyle.trim().length() > 0) {
+				if (fillStyle.startsWith("#")) {
+					int color = Integer.parseInt(fillStyle.substring(1), 16);
+					graphics.setColor(new Color(color));
+					return;
+				}
+				if (fillStyle.startsWith("hsl")) {
+					int red = (int) (Math.random() * 255);
+					int green = (int) (Math.random() * 255);
+					int blue = (int) (Math.random() * 255);
+					graphics.setColor(new Color(red, green, blue));
+					return;
+				}
+
 				if ("Blue".equalsIgnoreCase(fillStyle)) {
 					graphics.setColor(new Color(0, 0, 255));
 				} else if ("Red".equalsIgnoreCase(fillStyle)) {
@@ -157,6 +173,8 @@ public class JSGraphEngine {
 					graphics.setColor(new Color(255, 255, 255));
 				} else if ("Black".equalsIgnoreCase(fillStyle)) {
 					graphics.setColor(new Color(0, 0, 0));
+				} else if ("lightblue".equalsIgnoreCase(fillStyle)) {
+					graphics.setColor(new Color(193, 210, 240));
 				} else {
 					graphics.setColor(new Color(220, 0, 0));
 				}
@@ -165,6 +183,18 @@ public class JSGraphEngine {
 
 		private void applayStrokeColor() {
 			if (strokeStyle.trim().length() > 0) {
+				if (strokeStyle.startsWith("#")) {
+					int color = Integer.parseInt(strokeStyle.substring(1), 16);
+					graphics.setColor(new Color(color));
+					return;
+				}
+				if (strokeStyle.startsWith("hsl")) {
+					int red = (int) (Math.random() * 255);
+					int green = (int) (Math.random() * 255);
+					int blue = (int) (Math.random() * 255);
+					graphics.setColor(new Color(red, green, blue));
+					return;
+				}
 				if ("Blue".equalsIgnoreCase(strokeStyle)) {
 					graphics.setColor(new Color(0, 0, 255));
 				} else if ("Red".equalsIgnoreCase(strokeStyle)) {
@@ -177,6 +207,8 @@ public class JSGraphEngine {
 					graphics.setColor(new Color(255, 255, 255));
 				} else if ("Black".equalsIgnoreCase(strokeStyle)) {
 					graphics.setColor(new Color(0, 0, 0));
+				} else if ("lightblue".equalsIgnoreCase(strokeStyle)) {
+					graphics.setColor(new Color(193, 210, 240));
 				} else {
 					graphics.setColor(new Color(220, 220, 0));
 				}
@@ -194,7 +226,12 @@ public class JSGraphEngine {
 				}
 				fontSize = fontSize.substring(0, index);
 				float fSzie = Float.parseFloat(fontSize);
-				Font font = new Font(fontName, Font.BOLD, (int) fSzie);
+				Font font = null;
+				if (isWindows) {
+					font = new Font("黑体", Font.BOLD, (int) fSzie);
+				} else {
+					font = new Font(fontName, Font.BOLD, (int) fSzie);
+				}
 				graphics.setFont(font);
 			} else {
 				Font font = new Font("黑体", Font.BOLD, 10);

@@ -1,5 +1,5 @@
 // file: blclass.js    by littleflute 
-var g_ver_blClass = "blclass_v1.4.14"
+var g_ver_blClass = "CBlClass_v1.4.312"
 function myAjaxCmd(method, url, data, callback){
 	var xmlHttpReg = null;
 	if (window.XMLHttpRequest){
@@ -130,10 +130,318 @@ var blon = function(b,d,c1,c2){
 			return r;
 	}
 
-function blClass ()
+function CBlClass ()
 { 
     var _id = "id_div_4_blClass";
+	var _tmpDiv = null;
+	
+	var blAd = "Learning English v0.25";
+	var blTitle4Script = "No title";
+	var blScriptName = "noName";
+	var blRed = 0, blGreen=0, blBlue=0;
+	var _ps = [];
+	var _ts = [];
+
+	var _tmp = {
+		in: "inTest",
+		out: "outTest"
+	};
 	this.v = g_ver_blClass;
+	var _blVideo = document.createElement("VIDEO");
+	_blVideo.id = "id_blVideo";
+	if (_blVideo.canPlayType("video/mp4")) {
+		_blVideo.setAttribute("src","https://av.voanews.com/clips/VLE/2021/05/21/7dd0e442-fb6b-4bc7-b76b-158ad803f866.mp3");
+	}
+	_blVideo.setAttribute("width", "1");
+	_blVideo.setAttribute("height", "1"); 
+	document.body.appendChild(_blVideo);
+
+	
+	function CBlScript(){
+		function CFrame(_number,_time,_backgroundColor){
+			this.number = _number;
+			this.time = _time;
+			this.backgroundColor = _backgroundColor;
+			this.objects = []; 
+
+			this.addObj = function(_o){
+				this.objects.push(_o);
+			};
+			this.addTextAsObj = function(_txt,_x,_y,_size,_r,_g,_b){
+				var _o = {};
+				_o.text = _txt;
+				_o.x = _x;
+				_o.y = _y;
+				_o.size = _size;
+				_o.color = _r + ","+_g+","+_b;
+				this.objects.push(_o);
+			};
+			this.add_Text_As_Obj_1 = function(_txt,_x,_y,_size,_r,_g,_b){
+				var s1 = _txt.split(" ");
+				var n = 0;
+				var line = "";
+				var lineNum = 0;
+				for(var i=0; i<s1.length; i++){
+					n++;
+					line += s1[i] + " ";
+					if(n>10){							
+						var _o = {};
+						_o.text = line;
+						_o.x = _x;
+						_o.y = _y + lineNum * _size	;
+						_o.size = _size;
+						_o.color = _r + ","+_g+","+_b;
+						this.objects.push(_o);
+						n = 0;
+						line = "";						
+						lineNum ++;	
+					}
+				}
+				
+				if(n>0){							
+					var _o = {};
+					_o.text = line;
+					_o.x = _x;
+					_o.y = _y + lineNum * _size	;
+					_o.size = _size;
+					_o.color = _r + ","+_g+","+_b;
+					this.objects.push(_o);
+					n = 0;
+					line = "";						
+					lineNum ++;	
+				}
+			};
+		};
+		var _bl2MakeScript = function(_os,_fs,_supObjs){		 
+			var s = {};
+			var r = {};		
+			r.version = _os.version;
+			r.width = _os.width;
+			r.height = _os.height;
+			r.music = _os.music;
+			r.rate = _os.rate; 
+			r.frames = _fs;		
+			r.superObjects = _supObjs;	
+			s.request = r;			
+			return s;		 
+		}
+		var _sos = [];
+			var so1 ={
+                "type": "text",
+                "attribute": {
+                    "x1": 50,
+                    "y1": 500,
+                    "x2": -1,
+                    "y2": -1,
+                    "size": 50,
+                    "color": "200,182,193",
+                    "name": "漂泊者乐园是个好地方"
+                },
+                "frameRange": "(2,100)",
+                "action": {
+                    "trace": "y=0*x*x+1*x+0",
+                    "step": 10
+                }
+            };
+		var so2 =  {
+			"type": "circle",
+			"attribute": {
+				"x1": 20,
+				"y1": 200,
+				"x2": 100,
+				"y2": 100,
+				"size": 0.0,
+				"color": "255,250,0",
+				"name": "circle3"
+			},
+			"frameRange": "(2,100)",
+			"action": {
+				"trace": "y=0*x*x+0*x+300",
+				"step": 10
+			}
+		};
+		var so3 = {};
+		so3.type = "circle";
+		so3.frameRange = "(2,100)";
+		var a = {};
+		a.x1 = 20;
+		a.y1 = 200;
+		a.x2 = 20;
+		a.y2 = 200;
+		a.size = 0.0;
+		a.color = "255,250,0";
+		a.name = "circle3";
+		so3.attribute = a;
+		var ac = {};
+		ac.trace = "y=0*x*x+0*x+300";
+		ac.step = 10;
+
+		so3.action = ac;
+		//_sos.push(so1);
+		_sos.push(so3);
+
+		var _oScript = {};
+		_oScript.version = "v0.0.42";
+		_oScript.width = 1920;
+		_oScript.height = 1080;
+		_oScript.music = _blVideo.src;
+		_oScript.rate = "1";
+		_oScript.blrPlay = function(b,d){
+			_blVideo.play();
+		}
+		_oScript.blrPause = function(b,d){
+			_blVideo.pause();
+		}	
+		_oScript.blrScript2Mp4 = function(b,d){ 			
+			var url = "http://localhost:8080/image/json2video?script=" + blScriptName + ".json&video=" + blScriptName + ".mp4"; 
+			b._2do = function(txt){d.innerHTML = txt};
+			blo0.blAjx(b,url);
+		}		
+		_oScript.blrSaveScript = function(b,d){ 			
+
+			var pl = _bl2MakeScript(_oScript,_frames,_sos);
+			_oScript.music = _blVideo.src;
+
+			var url = "http://localhost:8080/json?fileName=" + blScriptName + ".json"; 
+        	blo0.blPOST(url,pl,function(txt){
+         		 d.innerHTML = txt;
+        	});
+		}
+		_oScript.blrShowPlainScript = function(b,d){
+			var os = _bl2MakeScript(_oScript,_frames,_sos);
+			var txt = JSON.stringify(os);
+			d.innerHTML = txt;
+			_on_off_div(b,d);
+			b.style.background = b.style.background=="red"?blGrey[5]:blColor[4];
+		}
+		
+		var _frames = [];
+		this.blrAbout = function(b,d){
+			_blShowObj2Div(d,_oScript);
+			_on_off_div(b,d);
+			b.style.background = b.style.background=="red"?blGrey[5]:blColor[4];
+		};
+		this.bll1 = "-1-";
+		this.blrFrames = function(b,d){
+			var tb = blo0.blDiv(d,d.id+"tb","tb",blGrey[0]);
+			var v = blo0.blDiv(d,d.id+"v","v",blGrey[1]);
+			var btnC1 = blo0.blBtn(tb,tb.id+"btnC1","btnC1","rgb(255,0,0)");
+			btnC1.onclick = function(){
+				v.style.backgroundColor = "rgb(255,0,0)";
+				blRed = 255; blGreen = 0; blBlue = 0;
+			}
+			var btnC2 = blo0.blBtn(tb,tb.id+"btnC2","btnC2","rgb(0,255,0)");
+			btnC2.onclick = function(){
+				v.style.backgroundColor = "rgb(0,255,0)";
+				blRed = 0; blGreen = 255; blBlue = 0;
+			}
+			var btnC3 = blo0.blBtn(tb,tb.id+"btnC3","btnC3","rgb(0,0,255)");
+			btnC3.onclick = function(){
+				v.style.backgroundColor = "rgb(0,0,255)";
+				blRed = 0; blGreen = 0; blBlue = 255;
+			}
+			var btnAddPS = blo0.blBtn(tb,tb.id+"btnAddPS","btnAddPS",blGrey[2]);
+			btnAddPS.onclick = function(){
+				var ps = blo0.blGetPS();
+				ps.lastText = "";
+				for(i in _frames){
+					var f = _frames[i];
+					var s = "ps:" + f.number;
+					var find = false;
+					for(j in ps){
+						if(ps[j].t==f.number){
+							s += ps[j].innerHTML;	
+							ps.lastText = s;
+							find = true;						
+							break;
+						}
+					}
+					if(false==find) s = ps.lastText;
+					f.add_Text_As_Obj_1(s,100,333,50,255,255,1);
+				}
+			}
+			var ls = [];
+			for(i in _frames){
+				var btn = blo0.blBtn(tb,"FRAME_ID_" + i,i,blGrey[2]);
+				btn.onclick = function(_fs,_i,_ls,_btn){
+					return function(){
+						blo0.blMarkBtnInList(_btn,_ls,"green","grey");
+						_blVideo.currentTime = _fs[_i].number;
+
+						v.innerHTML = _fs[_i].number;
+						v.tb = blo0.blDiv(v,v.id+"tb","tb",blGrey[0]);
+						v.v = blo0.blDiv(v,v.id+"v","v",blGrey[2]);
+						var btnObjs = blo0.blBtn(v.tb,v.tb.id+"btnObjs","btnObjs",blGrey[1]);
+						btnObjs.onclick = function(){
+							//_blShowObj2Div(v.v,_fs[_i].objects);
+							v.v.innerHTML = "";
+							var otb = blo0.blDiv(v.v,v.v.id+"otb","otb",blGrey[0]);
+							var ov = blo0.blDiv(v.v,v.v.id+"ov","ov",blGrey[1]);
+							var fos = _fs[_i].objects;
+							var lsobtn = [];
+							for(i in fos){
+								var obtn = blo0.blBtn(otb,otb.id+i,i,blGrey[1]);
+								obtn.onclick = function(_fos,_i,_obtn){
+									return function(){
+										blo0.blMarkBtnInList(_obtn,lsobtn,"green","grey");
+										_blShowObj2Div(ov,_fos[_i]);
+									}
+								}(fos,i,obtn);
+								lsobtn.push(obtn);
+							}
+						}
+						btnObjs.click();
+					}
+				}(_frames,i,ls,btn);
+				ls.push(btn);
+			}
+
+			_on_off_div(b,d);
+			b.style.background = b.style.background=="red"?blGrey[5]:blColor[4];
+		};
+		this.bll2 = "-2-";
+		this.blrAddFrames = function(b,d){ 
+			for(var i = 0; i < _blVideo.duration; i++){
+				var n = _frames.length;				
+				var f = new CFrame(n,"1",blRed+ ","+blGreen+","+blBlue);
+				var t1 = {
+					"text": i + ": by Littleflute", 
+					"x": 100,
+					"y": 555,
+					"size": 111,
+					"color": "0,1,255"
+				};
+				f.addObj(t1);
+				f.addTextAsObj(blAd,100,111,100,255,0,0);				
+				f.addTextAsObj(blTitle4Script,100,222,55,255,0,250);
+				f.addTextAsObj('"'+_ps.length+'"',500,222,55,55,220,250); 
+				_frames.push(f);
+			}
+
+			bl$("blrFrames").click();bl$("blrFrames").click();
+		}
+		this.blrTimer = function(b,d){
+			if(!d.bTimerRun){
+				d.bTimerRun = true;
+				var tb = blo0.blDiv(d,d.id+"tb","tb",blGrey[0]);
+				var v1 = blo0.blDiv(d,d.id+"v1","v1","green");
+				var v2 = blo0.blDiv(d,d.id+"v2","v2","green");
+				var _fn4Timer = function(_v1,_v2){
+					return function(){
+						var ct = Math.floor(_blVideo.currentTime);
+
+						_v1.innerHTML = _blVideo.currentTime  + "/" + _blVideo.duration;
+						_v2.innerHTML = "f="+_frames[ct].objects[4].text;
+					}
+				}(v1,v2);
+				_blScript.timer = setInterval(_fn4Timer, 100);
+			}
+			_on_off_div(b,d);
+			b.style.background = b.style.background=="red"?blGrey[5]:blColor[4];			
+		}
+	};
+	var _blScript = new CBlScript();
+
 	
 	function _blhMakeLink(txt,href,style,target){
 		var r = "";
@@ -143,21 +451,124 @@ function blClass ()
 		r +=">" + txt; 
 		r += "</a>";   
 		return r;
+	}  
+	this.blTags = function(txtHTML,tagName){ 
+		if(!_tmpDiv)
+		{
+			_tmpDiv = this.blDiv(document.body,"id_div_4_tmpDiv","","green");
+			_tmpDiv.style.display = "none";
+		}
+		_tmpDiv.innerHTML = txtHTML;
+		var rs = _tmpDiv.getElementsByTagName(tagName);
+		return rs;
 	} 
-
-    this.blhMakeLink = function (txt,href,style,target) { return _blhMakeLink(txt,href,style,target); } 
-    this.blrMax = function (b,d)
-    {        
-		 d.parentElement.parentElement.style.left = 0+"px";
-		 d.parentElement.parentElement.style.top = 0+"px";
-		 d.parentElement.parentElement.style.width = "100%";
+	this.blShowScript = function(_v){
+		var now = new Date();
+		now = now.toLocaleString();	 
+		_blScript.now = now;
+		_blShowObj2Div(_v,_blScript);
+		bl$("blrAbout").click();
+		bl$("blrFrames").click();		
+		bl$("blrTimer").click();
 	}
+	this.blMakeScript = function(){		
+		var now = new Date();
+		now = now.toLocaleString();
+		var d = {};
+		var r = {};		
+		r.version = "v0.21";
+		r.width = 1920;
+		r.height = 1080;
+		r.music = _blVideo.src;
+		r.rate = "1";
+		var fs =  [
+			{
+				"number": "1", 
+				"time": Math.floor(_blVideo.duration), 
+				"objects": [  					
+                    {
+                        "text": blAd, 
+                        "x": 100,
+                        "y": 50,
+                        "size": 50,
+                        "color": "0,255,0"
+                    }, 				
+                    {
+                        "text": blTitle4Script, 
+                        "x": 100,
+                        "y": 150,
+                        "size": 50,
+                        "color": "255,255,0"
+                    }, 						
+                    {
+                        "text": "by Littleflute", 
+                        "x": 100,
+                        "y": 222,
+                        "size": 50,
+                        "color": "0,255,0"
+                    },	
+                    {
+                        "text": now, 
+                        "x": 100,
+                        "y": 311,
+                        "size": 50,
+                        "color": "0,255,255"
+                    },
+					{						
+						"graphic": "rect", 
+						"attribute": {
+							"left": 500, 
+							"top": 400, 
+							"width": 100, 
+							"height": 150, 
+							"color": "142,28,124"
+						}
+					}
+				], 
+				"backgroundColor": "1,100,222"
+			}
+		];
+		r.frames = fs;
+		
+		d.request = r;
+		
+		return d;		 
+	}
+	this.blSetPS = function(ps){		_ps = ps;	}
+	this.setScriptName = function(_scriptName){
+		blScriptName = _scriptName;
+	}
+	this.setTitle4Script = function(title){
+		blTitle4Script = title;
+	}
+	this.getTitle4Script = function(){
+		return blTitle4Script;
+	}
+	this.blGetCurTime = function(){		return _blVideo.currentTime;	}
+	this.blGetPS = function(){		return _ps;	}
+	this.setPlayerURL = function(url){
+		_blVideo.src = url;
+		_blVideo.load();
+	}
+	this.getPlayerSrc = function(url){
+		return _blVideo.src;
+	}
+
+	this.getDuration = function(){ 
+		return _blVideo.duration;
+	}
+	this.toPlay = function(){ 
+		_blVideo.play();
+	}
+
 	this.blrAboutMe= function(b,d){		
 		var s = ""; 
-		s += _blhMakeLink('blclass.js ','https://littleflute.github.io/JavaScript/blclass.js','color:skyblue;','_blank');
-		s += _blhMakeLink(' blclass.js*','https://github.com/littleflute/JavaScript/edit/master/blclass.js','color:skyblue;','_blank');
+		s += _blhMakeLink('blclass.js ','https://littleflute.github.io/Games/blclass.js','color:skyblue;','_blank');
+		s += _blhMakeLink(' blclass.js*','https://github.com/littleflute/Games/edit/master/blclass.js','color:skyblue;','_blank');
+		s += _blhMakeLink(' blog','https://github.com/littleflute/blog','color:yellow;','_blank');
 		d.innerHTML = s;
 		_on_off_div(b,d);
+		b.style.background = b.style.background=="red"?blGrey[5]:blColor[4];
 	}
 	this.blhInitUI		= function(divUI){	
 		var divMove		= blo0.blMDiv(document.body,_id,"divShowMe_divMove_blClass",550,150,500,200,blColor[8]);
@@ -167,6 +578,62 @@ function blClass ()
 		b1.onclick		= function(this_){	return function(){ 	blo0.blShowObj2Div(dMe,this_);_on_off_div(this,divMove);}}(this);
 		
 	};
+
+	this.blMarkBtnInList= function(_btn,_ls,_highlightColor,_darkColor){  
+		for(j in _ls){
+			if(_btn.id==_ls[j].id){
+				_btn.style.backgroundColor = _highlightColor;
+			}
+			else{
+				_ls[j].style.backgroundColor = _darkColor;
+			}
+		}		
+	}
+	
+	this.blParseText = function(_txt,_oCfg){  
+		_oCfg.parse = "parseTest"; 
+	}
+	
+	this.showMe = function(myHandle){ 
+		if(!myHandle.m){
+			myHandle.m = blo0.blMD(myHandle.id+"showMe"," blo0 ",555,50,555,500,"lightgreen");
+			myHandle.n = 1;
+			myHandle.b = true;
+			myHandle.style.backgroundColor = "green"; 
+			var v = blo0.blDiv(myHandle.m,myHandle.m.id+"v","v","lightblue");	
+			var tb			= blo0.blDiv(v,v.id + "tb" + this.v,this.v,"lightgreen");			
+			var d4URL			= blo0.blDiv(v,v.id + "d4URL","d4URL",blColor[4]);	
+			d4URL.innerHTML = blo0.blURL();
+			var div4Parse			= blo0.blDiv(v,v.id + "ShowMe","divShowMe",blColor[6]);
+			var btnParseMe			= blo0.blBtn(tb,tb.id+"btnParseMe","[blo0]",blGrey[0]);
+			btnParseMe.onclick		= function(_this,_v){
+					return function(){
+						 	blo0.blShowObj2Div(_v,blo0);blon(_this,_v,"grey","green");
+					}
+			}(btnParseMe,div4Parse);
+			var btnParseTmp			= blo0.blBtn(tb,tb.id+"btnParseTmp","[tmp]",blGrey[0]);
+			btnParseTmp.onclick		= function(_this,_v){
+					return function(){ 
+						_v.innerHTML = _this.id;
+						blo0.blParseText("abc",_tmp);
+						blo0.blShowObj2Div(_v,_tmp);blon(_this,_v,"grey","green");
+					}
+			}(btnParseTmp,div4Parse);
+			
+		}
+		if(myHandle.n>1){			blon(myHandle,myHandle.m,"grey","green");		}		myHandle.n++;
+	}
+
+	this.blURL = function(){
+		return window.location.href;
+	}
+    this.blhMakeLink = function (txt,href,style,target) { return _blhMakeLink(txt,href,style,target); } 
+    this.blrMax = function (b,d)
+    {        
+		 d.parentElement.parentElement.style.left = 0+"px";
+		 d.parentElement.parentElement.style.top = 0+"px";
+		 d.parentElement.parentElement.style.width = "100%";
+	}
     this.blCreatePage = function (titleTxt,bodyHtml){
 		var r = "";
 		r	+= "<HTML><HEAD><TITLE>";
@@ -319,7 +786,7 @@ function blClass ()
 		}
 	    	return md;
     }
-    _blShowObj2Div_all = function (oBoss,obj,l) //blclassdbg 1039
+    _blShowObj_2_Div_all = function (oBoss,obj,l) //blclassdbg 1039
     {	  
         oBoss.innerHTML = "";
         for(i in obj)
@@ -340,7 +807,7 @@ function blClass ()
 			  var d = document.createElement("div");
 			  if("object" == typeof obj[i])
 			  {
-					_blShowObj2Div_all(d,obj[i],l+1);
+					_blShowObj_2_Div_all(d,obj[i],l+1);
 			  }
 			  else{
 				d.innerHTML = obj[i];
@@ -368,7 +835,7 @@ function blClass ()
 	}
     this.blShowObj2Div_all = function (oBoss,obj,l) 
     {	 
-        _blShowObj2Div_all(oBoss,obj,l);	 
+        _blShowObj_2_Div_all(oBoss,obj,l);	 
 	}
     this.blShowObj2Div = function (oDivBoss,obj)
     {	 
@@ -468,8 +935,8 @@ function blClass ()
             if (xmlhttp.readyState==4 && xmlhttp.status==200){
                worker._2do(xmlhttp.responseText);
             }
-			else{
-              // worker._error("xmlhttp.status:" + xmlhttp.status);
+			else{    
+			  worker._2do("error");
 			}
         }
         xmlhttp.open("GET",href,true);
@@ -835,10 +1302,23 @@ function blClass ()
 		}
 		return r;
 	}
+	this.blTime = function(nOption){
+		var d = new Date();
+		switch(nOption){
+			case 0:
+				return d.toLocaleTimeString();
+				break;			
+			default:
+				return d;
+				break;
+		}
+	}
 	
-}//END: function blClass ()
+	
+}//END: function CBlClass ()
  
-var blo0 = new blClass;
+var blo0 = new CBlClass;
+ 
  
 blo0.lsCVS = [];
 var mousedownList = [];
@@ -1190,6 +1670,7 @@ blo0.blCanvase = function(d,w,h,color){
 	var interval = setInterval(fTimer, 20);
 	return cvs;
 }
+
 blo0.blParseURL = function(_url,cb){  
 	myAjaxCmd('GET',_url, null, ajaxFun);
 	function ajaxFun(resp){
@@ -1201,6 +1682,21 @@ blo0.blParseURL = function(_url,cb){
 		  }
 		}			 
 	 } 
+}
+blo0.blPOST = function(_url,_jsonData,_cb){  
+	var xhr = new XMLHttpRequest();
+	xhr.withCredentials = true;
+	xhr.addEventListener("readystatechange", function() {
+		if(this.readyState === 4 && this.status==200) {
+			_cb( this.responseText );
+		}	
+		else{
+			_cb("error: " + this.readyState + "," + this.status);
+		}
+	});
+	xhr.open("POST", _url);
+	xhr.setRequestHeader("Content-Type", "text/plain");
+	xhr.send(JSON.stringify(_jsonData));
 }
 blo0.blGetGHI = function(_url,cb){  //git github issue
 	var r = "blo0.blGetGHI： "+ _url + "_" + cb + ":"+ Date();

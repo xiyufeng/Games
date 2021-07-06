@@ -9,16 +9,30 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
+import java.net.HttpURLConnection;
+import java.net.InetSocketAddress;
+import java.net.Proxy;
 import java.net.URL;
 import java.net.URLConnection;
+import java.net.URLEncoder;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.StringTokenizer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSessionContext;
 
 import org.jaudiotagger.audio.mp3.MP3AudioHeader;
 import org.jaudiotagger.audio.mp3.MP3File;
 
 public class FileUtil {
+
+	private static String zhPattern = "[\\u4e00-\\u9fa5]";
+	private static final String replaceString = "raw.githubusercontent.com";
 
 	public static void copyDirectory(File sourceDir, File targetDir) throws IOException {
 
@@ -147,8 +161,25 @@ public class FileUtil {
 
 	public static void downloadFile(String url, String saveFilePath) {
 		try {
+			url = fixUrl(url);
 			URL fileUrl = new URL(url);
-			InputStream is = fileUrl.openStream();
+			InputStream is = null;
+			// Proxy
+			boolean b = false;
+			if (b) {
+				javax.net.ssl.TrustManager[] trustAllCerts = { new TrustAllTrustManager() };
+				SSLContext sc = SSLContext.getInstance("SSL");
+				SSLSessionContext sslsc = sc.getServerSessionContext();
+				sslsc.setSessionTimeout(0);
+				sc.init(null, trustAllCerts, null);
+				HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
+				HttpsURLConnection.setDefaultHostnameVerifier(new NullHostnameVerifier());
+				Proxy proxy = new Proxy(Proxy.Type.SOCKS, new InetSocketAddress("localhost", 4567));
+				HttpURLConnection urlc = (HttpURLConnection) fileUrl.openConnection(proxy);
+				is = urlc.getInputStream();
+			} else {
+				is = fileUrl.openStream();
+			}
 			OutputStream os = new FileOutputStream(saveFilePath);
 			byte bf[] = new byte[1024];
 			int length = 0;
@@ -158,7 +189,7 @@ public class FileUtil {
 			is.close();
 			os.close();
 		} catch (Exception e) {
-			System.out.println(e.getMessage());
+			System.out.println("Error:" + e.getMessage());
 		}
 	}
 
@@ -169,7 +200,7 @@ public class FileUtil {
 		return Integer.toString(len);
 	}
 
-	public static String downloadFileIfNeed(String file) {
+	public static String downloadFileIfNeed(String file) throws IOException {
 		String fileName = file;
 		if (fileName.contains("/")) {
 			fileName = fileName.substring(fileName.lastIndexOf("/") + 1);
@@ -203,6 +234,63 @@ public class FileUtil {
 		return new File(savedFilePath).getName();
 	}
 
+	private static String fixUrl(String url) throws IOException {
+		url = encodeString(url, "UTF-8");
+		if (url.contains(replaceString)) {
+			// https://raw.githubusercontent.com/littleflute/cchess/master/blCChess.json ->
+			// https://littleflute.github.io/cchess/blCChess.json
+			String sIn = new String(url);
+			int index = sIn.indexOf(replaceString);
+			index = index + replaceString.length() + 1;
+			String temp = sIn.substring(index);
+			int index2 = temp.indexOf("/");
+			String firstWord = temp.substring(0, index2);
+			String leftWords = temp.substring(index2);
+			String result = "https://" + firstWord + ".github.io" + leftWords;
+			result = result.replaceAll("master/", "");
+			System.out.println("fixed url:" + result);
+			return result;
+		} else {
+			System.out.println("encoded url:" + url);
+			return url;
+		}
+	}
+
+	public static String encodeString(String str, String charset) throws UnsupportedEncodingException {
+		Pattern p = Pattern.compile(zhPattern);
+		Matcher m = p.matcher(str);
+		StringBuffer b = new StringBuffer();
+		while (m.find()) {
+			m.appendReplacement(b, URLEncoder.encode(m.group(0), charset));
+		}
+		m.appendTail(b);
+		return b.toString();
+	}
+
+	public static void removeTempFiles() {
+		int index = 1;
+		while (true) {
+			String jpgFilePath = System.getProperty("user.dir") + "/" + Integer.toString(index) + ".jpg";
+			File jpgFile = new File(jpgFilePath);
+
+			String jpegFilePath = System.getProperty("user.dir") + "/" + Integer.toString(index) + ".jpeg";
+			File jpegFile = new File(jpegFilePath);
+
+			if (!jpgFile.exists() && !jpegFile.exists()) {
+				break;
+			}
+			if (jpgFile.exists()) {
+				jpgFile.delete();
+
+			}
+			if (jpegFile.exists()) {
+				jpegFile.delete();
+			}
+			index++;
+		}
+
+	}
+
 	public static int chmod(String args) throws Exception {
 		int result = -1;
 		try {
@@ -214,5 +302,41 @@ public class FileUtil {
 		}
 		return result;
 
+	}
+
+	public static void main(String[] args) {
+
+		// 全局代理
+		// Properties prop = System.getProperties();
+		// prop.setProperty("socksProxyHost", "localhost");
+		// prop.setProperty("socksProxyPort", "4567");
+
+		// https://learningenglish.voanews.com/z/3521&filename=AsItIs.html
+		String strUrl = "https://learningenglish.voanews.com/z/3521";
+		// strUrl = "http://news.baidu.com";
+		// strUrl = "https://www.google.com";
+		// ProxySelector.getDefault();
+		// System.setProperty("java.net.preferIPv4Stack", "true");
+		// System.setProperty("jdk.tls.useExtendedMasterSecret", "false");
+		downloadFile(strUrl, "/Users/jeremy/temp/asItis.html");
+		try {
+			URL url = new URL(strUrl);
+			InetSocketAddress addr = new InetSocketAddress("localhost", 4567);
+			Proxy proxy = new Proxy(Proxy.Type.SOCKS, addr); // Socket 代理
+			URLConnection conn = url.openConnection(proxy);
+			InputStream is = conn.getInputStream();
+			OutputStream os = new FileOutputStream("/Users/jeremy/temp/download1.html");
+			byte bf[] = new byte[1024];
+			int length = 0;
+			while ((length = is.read(bf, 0, 1024)) != -1) {
+				os.write(bf, 0, length);
+			}
+			is.close();
+			os.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+			System.out.println(e.getMessage());
+		}
+		System.out.println("OK!");
 	}
 }
